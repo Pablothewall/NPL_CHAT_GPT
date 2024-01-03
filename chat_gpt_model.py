@@ -53,7 +53,7 @@ bert_model = TFBertModel.from_pretrained('bert-base-uncased')
 
 
 # Example numeric features
-num_features = 3  # Replace with the actual number of numeric features
+num_features = 1  # Replace with the actual number of numeric features
 
 # Define input layers
 text_input = Input(shape=(206,), dtype=tf.int32, name='text_input')

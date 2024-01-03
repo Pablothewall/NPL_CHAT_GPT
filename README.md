@@ -1,0 +1,1 @@
+El script Data Final estan la cracion del pickle merged_result.pkl. En el script Modelos_Random_Forest_MLP estan los dos modelos que elegimos. 
