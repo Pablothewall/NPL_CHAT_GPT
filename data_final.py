@@ -8,23 +8,26 @@ import csv
 import pickle
 import numpy as np
 from remove_stop_words_function import remove_stop_lemma_words
-DFF= pd.read_csv(r"C:\Users\pablo\Desktop\NLP\DFF.csv")
-DTB3= pd.read_csv(r"C:\Users\pablo\Desktop\NLP\DTB3.csv")
-final=DFF.merge(DTB3, on="DATE")
-final=final.apply(lambda y: y.replace(to_replace=".", method='ffill'),axis=1)
-final['DFF']=final['DFF'].astype(float)
-final['DTB3']=final['DTB3'].astype(float)
+
+import pandas_datareader as pdr
+import datetime
+start_date = datetime.datetime(1954,7,1)
+df = pdr.get_data_fred(['DFF', "DTB3"], start_date)
+# DFF= pd.read_csv(r"C:\Users\pablo\Desktop\NLP\DFF.csv")
+# DTB3= pd.read_csv(r"C:\Users\pablo\Desktop\NLP\DTB3.csv")
+# final=DFF.merge(DTB3, on="DATE")
+# final=final.apply(lambda y: y.replace(to_replace=".", method='ffill'),axis=1)
+final = df.ffill()
+# final['DFF']=final['DFF'].astype(float)
+# final['DTB3']=final['DTB3'].astype(float)
 final['Spread_DFF_DTB3']=final['DFF']-final['DTB3']
-
-final.set_index('DATE', inplace=True)
-final.plot()
+# final.set_index('DATE', inplace=True)
+# final.plot()
 #plt.show()
-
+final['DFF_+_23'] = final['DFF'].shift(-23)
 final['Avg_DFF_5_days'] = final['DFF'].rolling(window=5).mean()
 final['Avg_DTB3_5_days'] = final['DTB3'].rolling(window=5).mean()
 final['Spread_Avg_DFF_Avg_DTB3']=final['Avg_DFF_5_days']-final['Avg_DTB3_5_days']
-
-
 
 final['Dummies_DDF_DTB3'] = [2 if x > 0.025 else 1 if x < -0.025 else 0 for x in final['Spread_DFF_DTB3']]
 final['Dummies_Avg_DDF_Avg_DTB3'] = [2 if x > 0.025 else 1 if x < -0.025 else 0 for x in final['Spread_Avg_DFF_Avg_DTB3']]
@@ -45,20 +48,21 @@ print(final)
 
 #Minutes
 
-# dataset = FederalReserveMins().find_minutes()
-# FederalReserveMins().pickle_data(r"C:\Users\pablo\Desktop\NLP\minutes.pkl")
-
+dataset = FederalReserveMins().find_minutes()
+# FederalReserveMins().pickle_data("./minutes.pkl")
+dataset.to_pickle("minutes.pkl")
 
 with open('minutes.pkl', 'rb') as f:
-    minutes = pickle.load(f)
+    dataset = pickle.load(f)
 
-minutes=minutes["Federal_Reserve_Mins"].apply(lambda x: remove_stop_lemma_words(x))
+minutes=dataset["Federal_Reserve_Mins"].apply(lambda x: remove_stop_lemma_words(x))
 minutes=pd.DataFrame(minutes)
 minutes.columns=['Minutes']
 minutes.rename_axis("DATE", inplace=True)
 # minutes.set_index("DATE")
 final.reset_index(inplace=True)
 minutes.reset_index(inplace=True)
+
 
 final['DATE'] = pd.to_datetime(final['DATE'])
 result = final.merge(minutes, on='DATE')
@@ -95,3 +99,7 @@ result.to_pickle('merged_result.pkl')
 
 
 
+from FedTools import FederalReserveMins
+
+dataset = FederalReserveMins(historical_split = 2017).find_minutes()
+FederalReserveMins().pickle_data(r"C:\Users\L11420\Documents\GitHub\NPL_CHAT_GPT\minutes.pkl")
